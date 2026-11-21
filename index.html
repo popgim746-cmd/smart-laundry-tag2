@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0284c7" />
+  <link rel="manifest" href="manifest.json" />
+  <title>SLT — Smart Laundry Tag</title>
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <style>
+    :root {
+      --bg: #f1f5f9;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --primary: #0284c7;
+      --primary-grad: linear-gradient(135deg, #0284c7 0%, #0d9488 100%);
+      --primary-soft: rgba(2, 132, 199, 0.1);
+      --emerald: #059669;
+      --emerald-soft: rgba(5, 150, 105, 0.12);
+      --rose: #e11d48;
+      --rose-soft: rgba(225, 29, 72, 0.12);
+      --border: #e2e8f0;
+      --shadow: 0 12px 30px -12px rgba(15, 23, 42, 0.12);
+      --radius: 22px;
+    }
+
+    [data-theme="dark"] {
+      --bg: #060b16;
+      --surface: #0f172a;
+      --surface-2: #162036;
+      --ink: #f8fafc;
+      --muted: #94a3b8;
+      --primary: #38bdf8;
+      --primary-grad: linear-gradient(135deg, #0ea5e9 0%, #14b8a6 100%);
+      --primary-soft: rgba(56, 189, 248, 0.14);
+      --emerald: #34d399;
+      --emerald-soft: rgba(52, 211, 153, 0.14);
+      --rose: #fb7185;
+      --rose-soft: rgba(251, 113, 133, 0.14);
+      --border: #1e293b;
+      --shadow: 0 14px 32px -12px rgba(0, 0, 0, 0.6);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      padding-bottom: 92px;
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+    }
+
+    .header-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 11px; }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 15px;
+      background: var(--primary-grad);
+      color: #ffffff;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .brand-name { font-size: 16px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .brand-sub { font-size: 11px; color: var(--muted); }
+
+    .chip {
+      font-size: 10.5px;
+      font-weight: 800;
+      padding: 3px 9px;
+      border-radius: 99px;
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    .chip-green { background: var(--emerald-soft); color: var(--emerald); }
+    .chip-red { background: var(--rose-soft); color: var(--rose); }
+
+    .top-tools { display: flex; align-items: center; gap: 6px; }
+
+    .icon-btn {
+      height: 36px;
+      padding: 0 11px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .shell { max-width: 960px; margin: 16px auto; padding: 0 14px; }
+    .view-screen { display: none; animation: fadeSlide 0.22s ease; }
+    .view-screen.active { display: block; }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .screen-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .screen-title { font-size: 19px; font-weight: 800; }
+
+    .back-pill {
+      height: 36px;
+      padding: 0 13px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .hero {
+      background: var(--primary-grad);
+      color: #ffffff;
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 16px 32px -14px rgba(2, 132, 199, 0.55);
+    }
+
+    .hero-role {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: rgba(255, 255, 255, 0.18);
+      margin-bottom: 8px;
+    }
+
+    .hero h1 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+    .hero p { font-size: 13px; opacity: 0.92; margin-bottom: 16px; }
+
+    .hero-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+    .hero-btn {
+      height: 48px;
+      border-radius: 14px;
+      border: none;
+      font-family: inherit;
+      font-size: 13.5px;
+      font-weight: 800;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .hero-btn.solid { background: #ffffff; color: #0f172a; }
+    .hero-btn.glass {
+      background: rgba(255, 255, 255, 0.18);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    @media (min-width: 680px) { .kpi-grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+    }
+
+    .kpi-label { font-size: 12px; color: var(--muted); font-weight: 700; }
+    .kpi-val { font-size: 20px; font-weight: 800; margin-top: 6px; }
+
+    .services-hub {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 11px;
+    }
+
+    @media (min-width: 680px) { .services-hub { grid-template-columns: repeat(3, 1fr); } }
+
+    .hub-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+      text-align: start;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .hub-ico {
+      width: 42px;
+      height: 42px;
+      border-radius: 13px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      display: grid;
+      place-items: center;
+      font-size: 19px;
+    }
+
+    .hub-title { font-size: 14.5px; font-weight: 800; }
+    .hub-sub { font-size: 11.5px; color: var(--muted); line-height: 1.4; }
+
+    .box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .form-grid { display: grid; grid-template-columns: 1fr; gap: 11px; }
+    @media (min-width: 640px) { .form-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .field { display: flex; flex-direction: column; gap: 5px; }
+    .field.full { grid-column: 1 / -1; }
+    .field label { font-size: 12px; font-weight: 700; color: var(--muted); }
+
+    .field input,
+    .field select {
+      min-height: 46px;
+      padding: 10px 13px;
+      border-radius: 13px;
+      border: 1px solid var(--border);
+      background: var(--surface-2);
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 14px;
+    }
+
+    .btn-main {
+      grid-column: 1 / -1;
+      height: 48px;
+      border-radius: 14px;
+      border: none;
+      background: var(--primary-grad);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .list-grid { display: grid; grid-template-columns: 1fr; gap: 11px; }
+    @media (min-width: 720px) { .list-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .item-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 15px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
+
+    .row-between {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .progress {
+      height: 7px;
+      border-radius: 99px;
+      background: var(--border);
+      overflow: hidden;
+    }
+
+    .progress > div {
+      height: 100%;
+      background: var(--primary-grad);
+      transition: width 0.25s ease;
+    }
+
+    .btn-sm {
+      height: 34px;
+      padding: 0 11px;
+      border-radius: 10px;
+      border: none;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-emerald { background: var(--emerald); color: #ffffff; }
+    .btn-outline { background: var(--surface-2); color: var(--ink); border: 1px solid var(--border); }
+
+    .empty { text-align: center; padding: 32px 14px; color: var(--muted); font-size: 13.5px; }
+
+    .snackbar {
+      position: fixed;
+      top: 74px;
+      inset-inline: 14px;
+      max-width: 520px;
+      margin: 0 auto;
+      z-index: 80;
+      background: var(--ink);
+      color: var(--surface);
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 700;
+      box-shadow: 0 14px 30px rgba(0, 0, 0, 0.28);
+      display: none;
+    }
+
+    .modal-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      background: rgba(6, 11, 22, 0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .modal-wrap.open { display: flex; }
+
+    .modal-box {
+      width: 100%;
+      max-width: 440px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 13px;
+    }
+
+    #qrReader {
+      width: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      background: var(--surface-2);
+      min-height: 210px;
+    }
+
+    .tabbar {
+      position: fixed;
+      bottom: 0;
+      inset-inline: 0;
+      z-index: 40;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 8px 8px 10px;
+    }
+
+    .tabbar-inner {
+      max-width: 960px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 4px;
+    }
+
+    .tab-item {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 2px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .tab-item.active {
+      background: var(--primary-soft);
+      color: var(--primary);
+    }
+
+    @media print {
+      .app-header, .tabbar, .modal-wrap, .snackbar, .back-pill, .btn-sm, .hero-actions {
+        display: none !important;
+      }
+      .view-screen { display: block !important; }
+      body { background: #ffffff; color: #000000; padding-bottom: 0; }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-logo" aria-hidden="true">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2.5C7.5 8 5 11.3 5 14.5a7 7 0 0 0 14 0c0-3.2-2.5-6.5-7-12z"/>
+            <path d="M9.5 14.5h5M12 12v5"/>
+          </svg>
+        </div>
+        <div>
+          <div class="brand-name">
+            <span>SLT</span>
+            <span class="chip">Smart Laundry Tag</span>
+          </div>
+          <div class="brand-sub" id="uiTagline">Smart Identification. Smarter Laundry.</div>
+        </div>
+      </div>
+
+      <div class="top-tools">
+        <select id="selCurrency" class="icon-btn" aria-label="Currency">
+          <option value="YER">YER</option>
+          <option value="SAR">SAR</option>
+          <option value="USD">USD</option>
+        </select>
+        <button id="btnLang" class="icon-btn" type="button">EN</button>
+        <button id="btnTheme" class="icon-btn" type="button" aria-label="Theme">🌙</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="snackbar" class="snackbar"></div>
+
+  <main class="shell">
+    <!-- 1. الرئيسية -->
+    <section class="view-screen active" id="view-home">
+      <div class="hero">
+        <span class="hero-role" id="uiRoleBadge">المالك / المدير العام</span>
+        <h1 id="uiHeroTitle">لوحة التحكم الذكية</h1>
+        <p id="uiHeroSub">اختر أي خدمة لفتح نافذتها المستقلة أو امسح رمز QR عبر الكاميرا</p>
+        <div class="hero-actions">
+          <button type="button" class="hero-btn solid" id="btnOpenQr">📷 <span id="tQr">مسح QR بالكاميرا</span></button>
+          <button type="button" class="hero-btn glass" id="btnOpenNfc">📡 <span id="tNfc">قراءة NFC</span></button>
+        </div>
+      </div>
+
+      <div class="kpi-grid" id="homeKpis"></div>
+
+      <div class="screen-head">
+        <h2 class="screen-title" id="uiServicesHeading">جميع خدمات النظام</h2>
+      </div>
+      <div class="services-hub" id="servicesHub"></div>
+    </section>
+
+    <!-- 2. إنشاء طلب جديد -->
+    <section class="view-screen" id="view-new-order">
+      <div class="screen-head">
+        <h2 class="screen-title" id="tNewOrderTitle">إنشاء طلب جديد</h2>
+        <button type="button" class="back-pill" data-open="home">الرئيسية</button>
+      </div>
+      <div class="box">
+        <form id="orderForm" class="form-grid">
+          <div class="field">
+            <label for="inName">اسم العميل</label>
+            <input id="inName" type="text" required />
+          </div>
+          <div class="field">
+            <label for="inPhone">رقم الهاتف</label>
+            <input id="inPhone" type="tel" required />
+          </div>
+          <div class="field">
+            <label for="inService">نوع الخدمة</label>
+            <select id="inService">
+              <option value="wash_iron">غسيل وكوي معًا</option>
+              <option value="wash_only">غسيل فقط</option>
+              <option value="iron_only">كوي فقط</option>
+              <option value="dry_clean">تنظيف جاف</option>
+              <option value="express">غسيل مستعجل</option>
+              <option value="blankets">بطانيات ومفروشات</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="inTags">معرفات بطاقات SLT (افصل بفاصلة لعدة بطاقات)</label>
+            <input id="inTags" type="text" required placeholder="SLT-01, SLT-02" />
+          </div>
+          <div class="field">
+            <label for="inItems">عدد القطع</label>
+            <input id="inItems" type="number" min="1" value="1" required />
+          </div>
+          <div class="field">
+            <label for="inDelivery">موعد التسليم المتوقع</label>
+            <input id="inDelivery" type="date" />
+          </div>
+          <div class="field">
+            <label for="inTotal">الإجمالي</label>
+            <input id="inTotal" type="number" min="0" step="50" value="1000" required />
+          </div>
+          <div class="field">
+            <label for="inDiscount">الخصم</label>
+            <input id="inDiscount" type="number" min="0" step="50" value="0" />
+          </div>
+          <div class="field">
+            <label for="inPaid">المبلغ المدفوع</label>
+            <input id="inPaid" type="number" min="0" step="50" value="0" required />
+          </div>
+          <div class="field">
+            <label for="inPayMethod">طريقة الدفع</label>
+            <select id="inPayMethod">
+              <option value="cash">نقدًا</option>
+              <option value="transfer">تحويل بنكي</option>
+              <option value="ewallet">دفع إلكتروني</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label for="inNotes">ملاحظات الطلب</label>
+            <input id="inNotes" type="text" />
+          </div>
+          <button type="submit" class="btn-main">حفظ الطلب وربط البطاقات</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- 3. إدارة الطلبات -->
+    <section class="view-screen" id="view-orders">
+      <div class="screen-head">
+        <h2 class="screen-title">إدارة الطلبات وسير العمل</h2>
+        <button type="button" class="back-pill" data-open="home">الرئيسية</button>
+      </div>
+      <div class="box">
+        <div class="form-grid">
+          <div class="field">
+            <label for="filterStage">تصفية حسب المرحلة</label>
+            <select id="filterStage"><option value="all">الكل</option></select>
+          </div>
+          <div class="field">
+            <label for="searchOrder">بحث برقم الطلب أو العميل أو البطاقة</label>
+            <input id="searchOrder" type="search" />
+          </div>
+        </div>
+      </div>
+      <div class="list-grid" id="ordersList"></div>
+    </section>
+
+    <!-- 4. إدارة العملاء -->
+    <section class="view-screen" id="view-customers">
+      <div class="screen-head">
+        <h2 class="screen-title">إدارة العملاء والذمم</h2>
+        <button type="button" class="back-pill" data-open="home">الرئيسية</button>
+      </div>
+      <div class="box">
+        <div class="field">
+          <label for="searchCustomer">بحث بالاسم أو رقم الهاتف</label>
+          <input id="searchCustomer" type="search" />
+        </div>
+      </div>
+      <div class="list-grid" id="customersList"></div>
+    </section>
+
+    <!-- 5. البطاقات الذكية -->
+    <section class="view-screen" id="view-tags">
+      <div class="screen-head">
+        <h2 class="screen-title">إدارة بطاقات SLT (NFC + QR)</h2>
+        <button type="button" class="back-pill" data-open="home">الرئيسية</button>
+      </div>
+      <div class="box">
+        <form id="tagForm" class="form-grid">
+          <div class="field">
+            <label for="newTagCode">تسجيل معرف بطاقة جديدة</label>
+            <input id="newTagCode" type="text" required placeholder="SLT-10" />
+          </div>
+          <div class="field">
+            <label for="newTagNote">ملاحظة البطاقة</label>
+            <input id="newTagNote" type="text" />
+          </div>
+          <button type="submit" class="btn-main">تسجيل البطاقة في النظام</button>
+        </form>
+      </div>
+      <div class="kpi-grid" id="tagKpis"></div>
+      <div class="list-grid" id="tagsList"></div>
+    </section>
+
+    <!-- 6. المالية والتقارير -->
+    <section class="view-screen" id="view-finance">
+      <div class="screen-head">
+        <h2 class="screen-title">الإدارة المالية والتقارير</h2>
+        <button type="button" class="back-pill" data-open="home">الرئيسية</button>
+      </div>
+      <div class="kpi-grid" id="financeKpis"></div>
+      <div class="box">
+        <div class="row-between">
+          <strong>تصدير التقارير المالية من البيانات الفعلية</strong>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button type="button" class="btn-sm btn-emerald" id="btnDoPdf">تصدير / طباعة PDF</button>
+            <button type="button" class="btn-sm btn-outline" id="btnDoExcel">تصدير Excel (CSV)</button>
+          </div>
+        </div>
+      </div>
+      <div class="list-grid" id="paymentsList"></div>
+    </section>
+
+    <!-- 7. الصلاحيات والإعدادات -->
+    <section class="view-screen" id="view-settings">
+      <div class="screen-head">
+        <h2 class="screen-title">الصلاحيات والإعدادات</h2>
+        <button type="button" class="back-pill" data-open="home">الرئيسية</button>
+      </div>
+      <div class="box">
+        <div class="form-grid">
+          <div class="field">
+            <label for="selRole">الدور الوظيفي الحالي</label>
+            <select id="selRole">
+              <option value="owner">المالك / المدير العام</option>
+              <option value="reception">موظف الاستقبال</option>
+              <option value="sorting">موظف الفرز والغسيل</option>
+              <option value="delivery">موظف التوصيل</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="inLaundryName">اسم المغسلة</label>
+            <input id="inLaundryName" type="text" value="مغسلة SLT الذكية" />
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- نافذة مسح QR بالكاميرا -->
+  <div class="modal-wrap" id="qrModal">
+    <div class="modal-box">
+      <div class="row-between">
+        <h3 class="screen-title">مسح رمز QR للبطاقة</h3>
+        <button type="button" class="btn-sm btn-outline" id="btnCloseQr">إغلاق</button>
+      </div>
+      <div id="qrReader"></div>
+      <p id="qrStatusText" style="font-size:12.5px;color:var(--muted);">وجّه الكاميرا نحو رمز QR الخاص ببطاقة SLT.</p>
+    </div>
+  </div>
+
+  <!-- نافذة استلام المتبقي وإلغائه -->
+  <div class="modal-wrap" id="settleModal">
+    <div class="modal-box">
+      <h3 class="screen-title">استلام المبلغ المتبقي</h3>
+      <div class="box" style="margin:0;">
+        <div class="row-between"><span>الطلب</span><strong id="mOrderCode">-</strong></div>
+        <div class="row-between" style="margin-top:6px;"><span>العميل</span><strong id="mCustName">-</strong></div>
+        <div class="row-between" style="margin-top:6px;"><span>المبلغ المتبقي</span><strong style="color:var(--rose);font-size:16px;" id="mDueVal">0</strong></div>
+      </div>
+      <div class="field">
+        <label for="mPayMethod">طريقة استلام المبلغ</label>
+        <select id="mPayMethod">
+          <option value="cash">نقدًا</option>
+          <option value="transfer">تحويل بنكي</option>
+          <option value="ewallet">دفع إلكتروني</option>
+        </select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <button type="button" class="btn-sm btn-outline" style="height:44px;" id="btnCancelSettle">إلغاء</button>
+        <button type="button" class="btn-sm btn-emerald" style="height:44px;" id="btnConfirmSettle">استلام وإلغاء المتبقي</button>
+      </div>
+    </div>
+  </div>
+
+  <nav class="tabbar">
+    <div class="tabbar-inner">
+      <button type="button" class="tab-item active" data-open="home"><span>🏠</span><span>الرئيسية</span></button>
+      <button type="button" class="tab-item" data-open="new-order"><span>➕</span><span>طلب جديد</span></button>
+      <button type="button" class="tab-item" data-open="orders"><span>🧺</span><span>الطلبات</span></button>
+      <button type="button" class="tab-item" data-open="tags"><span>🏷️</span><span>البطاقات</span></button>
+      <button type="button" class="tab-item" data-open="finance"><span>💰</span><span>المالية</span></button>
+    </div>
+  </nav>
+
+  <script>
+    const STORE = "slt_v4_apk_ready";
+
+    const STAGES = [
+      { id: "received", ar: "مستلم", en: "Received", pct: 15 },
+      { id: "sorting", ar: "فرز", en: "Sorting", pct: 28 },
+      { id: "washing", ar: "غسيل", en: "Washing", pct: 45 },
+      { id: "drying", ar: "تجفيف", en: "Drying", pct: 62 },
+      { id: "ironing", ar: "كوي", en: "Ironing", pct: 78 },
+      { id: "ready", ar: "جاهز للتسليم", en: "Ready", pct: 90 },
+      { id: "delivered", ar: "تم التسليم", en: "Delivered", pct: 100 }
+    ];
+
+    const SERVICES = {
+      wash_iron: { ar: "غسيل وكوي معًا", en: "Wash & Iron Together" },
+      wash_only: { ar: "غسيل فقط", en: "Wash Only" },
+      iron_only: { ar: "كوي فقط", en: "Iron Only" },
+      dry_clean: { ar: "تنظيف جاف", en: "Dry Clean" },
+      express: { ar: "غسيل مستعجل", en: "Express Wash" },
+      blankets: { ar: "بطانيات ومفروشات", en: "Blankets & Bedding" }
+    };
+
+    const ROLES = {
+      owner: { ar: "المالك / المدير العام", en: "Owner / Administrator" },
+      reception: { ar: "موظف الاستقبال", en: "Reception Staff" },
+      sorting: { ar: "موظف الفرز والغسيل", en: "Sorting & Washing Staff" },
+      delivery: { ar: "موظف التوصيل", en: "Delivery Staff" }
+    };
+
+    const HUB_ITEMS = [
+      { view: "new-order", ico: "➕", ar: "إنشاء طلب جديد", subAr: "استلام ملابس واختيار الخدمة وربط بطاقات SLT", en: "Create New Order", subEn: "Receive garments, choose service & link SLT tags" },
+      { view: "orders", ico: "🧺", ar: "إدارة الطلبات", subAr: "متابعة المراحل السبع وتحصيل المتبقي", en: "Manage Orders", subEn: "Track 7 stages & collect due balances" },
+      { view: "customers", ico: "👥", ar: "إدارة العملاء", subAr: "سجل العملاء والطلبات والذمم المالية", en: "Customers", subEn: "Customer directory, history & balances" },
+      { view: "tags", ico: "🏷️", ar: "البطاقات الذكية", subAr: "تسجيل ومراقبة بطاقات NFC وQR", en: "Smart Tags", subEn: "Register & monitor NFC + QR tags" },
+      { view: "finance", ico: "💰", ar: "المالية والتقارير", subAr: "الإيرادات، المتبقي، الخصومات، PDF وExcel", en: "Financials & Reports", subEn: "Revenue, dues, discounts, PDF & Excel" },
+      { view: "settings", ico: "🛡️", ar: "الصلاحيات والإعدادات", subAr: "الأدوار الوظيفية والعملة والهوية", en: "Roles & Settings", subEn: "User roles, currency & preferences" }
+    ];
+
+    const initialData = {
+      lang: "ar",
+      theme: "light",
+      currency: "YER",
+      role: "owner",
+      laundryName: "مغسلة SLT الذكية",
+      activeView: "home",
+      orders: [],
+      tags: []
+    };
+
+    let state = (() => {
+      try {
+        const s = localStorage.getItem(STORE);
+        return s ? { ...initialData, ...JSON.parse(s) } : { ...initialData };
+      } catch {
+        return { ...initialData };
+      }
+    })();
+
+    let modalOrderId = null;
+    let qrScannerInstance = null;
+
+    function save() {
+      try { localStorage.setItem(STORE, JSON.stringify(state)); } catch {}
+    }
+
+    function toast(msg) {
+      const el = document.getElementById("snackbar");
+      el.textContent = msg;
+      el.style.display = "block";
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => { el.style.display = "none"; }, 3600);
+    }
+
+    function orderNet(o) {
+      return Math.max(0, Number(o.total || 0) - Number(o.discount || 0));
+    }
+
+    function orderDue(o) {
+      return Math.max(0, orderNet(o) - Number(o.paid || 0));
+    }
+
+    function openView(viewName) {
+      state.activeView = viewName;
+      document.querySelectorAll(".view-screen").forEach(v => v.classList.remove("active"));
+      const target = document.getElementById(`view-${viewName}`);
+      if (target) target.classList.add("active");
+      document.querySelectorAll(".tab-item").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.open === viewName);
+      });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      render();
+    }
+
+    function render() {
+      const isAr = state.lang === "ar";
+      document.documentElement.lang = state.lang;
+      document.documentElement.dir = isAr ? "rtl" : "ltr";
+      document.documentElement.setAttribute("data-theme", state.theme);
+
+      document.getElementById("btnLang").textContent = isAr ? "EN" : "AR";
+      document.getElementById("btnTheme").textContent = state.theme === "light" ? "🌙" : "☀️";
+      document.getElementById("selCurrency").value = state.currency;
+      document.getElementById("selRole").value = state.role;
+      document.getElementById("inLaundryName").value = state.laundryName;
+      document.getElementById("uiRoleBadge").textContent = ROLES[state.role][state.lang];
+
+      const srvSel = document.getElementById("inService");
+      Array.from(srvSel.options).forEach(opt => {
+        if (SERVICES[opt.value]) opt.textContent = SERVICES[opt.value][state.lang];
+      });
+
+      const filterSel = document.getElementById("filterStage");
+      const curFilter = filterSel.value || "all";
+      filterSel.innerHTML = `<option value="all">${isAr ? "الكل" : "All"}</option>` +
+        STAGES.map(s => `<option value="${s.id}">${s[state.lang]}</option>`).join("");
+      filterSel.value = curFilter;
+
+      const activeOrders = state.orders.filter(o => o.stage !== "delivered");
+      const collected = state.orders.reduce((s, o) => s + Number(o.paid || 0), 0);
+      const dueSum = state.orders.reduce((s, o) => s + orderDue(o), 0);
+      const discSum = state.orders.reduce((s, o) => s + Number(o.discount || 0), 0);
+
+      const kpiLabels = isAr
+        ? ["إجمالي الطلبات", "قيد التنفيذ", "المحصّل", "المتبقي"]
+        : ["Total Orders", "In Progress", "Collected", "Remaining"];
+      const kpiVals = [
+        state.orders.length,
+        activeOrders.length,
+        `${collected.toLocaleString()} ${state.currency}`,
+        `${dueSum.toLocaleString()} ${state.currency}`
+      ];
+
+      document.getElementById("homeKpis").innerHTML = kpiLabels.map((lbl, i) => `
+        <div class="kpi-card"><div class="kpi-label">${lbl}</div><div class="kpi-val">${kpiVals[i]}</div></div>
+      `).join("");
+
+      document.getElementById("servicesHub").innerHTML = HUB_ITEMS.map(item => `
+        <button type="button" class="hub-card" data-open="${item.view}">
+          <span class="hub-ico">${item.ico}</span>
+          <span class="hub-title">${isAr ? item.ar : item.en}</span>
+          <span class="hub-sub">${isAr ? item.subAr : item.subEn}</span>
+        </button>
+      `).join("");
+
+      const q = (document.getElementById("searchOrder").value || "").trim().toLowerCase();
+      const filteredOrders = state.orders.filter(o => {
+        const mStage = curFilter === "all" || o.stage === curFilter;
+        const mTxt = !q || o.code.toLowerCase().includes(q) || o.customer.toLowerCase().includes(q) || o.phone.includes(q) || o.tags.join(",").toLowerCase().includes(q);
+        return mStage && mTxt;
+      });
+
+      document.getElementById("ordersList").innerHTML = filteredOrders.length
+        ? filteredOrders.map(o => {
+            const st = STAGES.find(s => s.id === o.stage) || STAGES[0];
+            const due = orderDue(o);
+            const srv = SERVICES[o.service] ? SERVICES[o.service][state.lang] : o.service;
+            const opts = STAGES.map(s => `<option value="${s.id}" ${s.id === o.stage ? "selected" : ""}>${s[state.lang]}</option>`).join("");
+            return `
+              <article class="item-card">
+                <div class="row-between">
+                  <strong style="color:var(--primary);">${o.code}</strong>
+                  <div style="display:flex;gap:5px;flex-wrap:wrap;">${o.tags.map(tg => `<span class="chip">${tg}</span>`).join("")}</div>
+                </div>
+                <div><strong>${o.customer}</strong> · <span style="color:var(--muted);font-size:13px;">${o.phone}</span></div>
+                <div class="row-between" style="font-size:12.5px;color:var(--muted);">
+                  <span>${srv} (${o.items})</span>
+                  ${due > 0
+                    ? `<span class="chip chip-red">${isAr ? "متبقي" : "Due"}: ${due.toLocaleString()} ${state.currency}</span>`
+                    : `<span class="chip chip-green">${isAr ? "خالص" : "Paid"}</span>`}
+                </div>
+                <div class="progress"><div style="width:${st.pct}%"></div></div>
+                <div class="row-between">
+                  <select class="icon-btn stage-sel" data-id="${o.id}">${opts}</select>
+                  ${due > 0 ? `<button type="button" class="btn-sm btn-emerald settle-trigger" data-id="${o.id}">${isAr ? "تحصيل المتبقي" : "Collect Due"}</button>` : ""}
+                </div>
+              </article>
+            `;
+          }).join("")
+        : `<div class="empty">${isAr ? "لا توجد طلبات مطابقة حاليًا." : "No matching orders."}</div>`;
+
+      const custMap = new Map();
+      state.orders.forEach(o => {
+        const key = o.phone || o.customer;
+        const prev = custMap.get(key) || { name: o.customer, phone: o.phone, count: 0, due: 0, paid: 0 };
+        prev.count += 1;
+        prev.due += orderDue(o);
+        prev.paid += Number(o.paid || 0);
+        custMap.set(key, prev);
+      });
+      const cq = (document.getElementById("searchCustomer").value || "").trim().toLowerCase();
+      const custArr = Array.from(custMap.values()).filter(c => !cq || c.name.toLowerCase().includes(cq) || c.phone.includes(cq));
+      document.getElementById("customersList").innerHTML = custArr.length
+        ? custArr.map(c => `
+            <article class="item-card">
+              <div class="row-between"><strong>${c.name}</strong><span class="chip">${c.count}</span></div>
+              <div style="font-size:13px;color:var(--muted);">${c.phone}</div>
+              <div class="row-between" style="font-size:12.5px;">
+                <span>${kpiLabels[2]}: ${c.paid.toLocaleString()} ${state.currency}</span>
+                <span class="${c.due > 0 ? "chip chip-red" : "chip chip-green"}">${kpiLabels[3]}: ${c.due.toLocaleString()} ${state.currency}</span>
+              </div>
+            </article>
+          `).join("")
+        : `<div class="empty">${isAr ? "لا يوجد عملاء مسجلون بعد." : "No customers yet."}</div>`;
+
+      const busyTags = new Set();
+      state.orders.filter(o => o.stage !== "delivered").forEach(o => o.tags.forEach(tg => busyTags.add(tg)));
+      const tagMap = new Map();
+      state.tags.forEach(tg => tagMap.set(tg.code, tg));
+      state.orders.forEach(o => o.tags.forEach(code => { if (!tagMap.has(code)) tagMap.set(code, { code, note: "", disabled: false }); }));
+      const tagsListArr = Array.from(tagMap.values());
+
+      document.getElementById("tagKpis").innerHTML = [
+        { l: isAr ? "إجمالي البطاقات" : "Total", v: tagsListArr.length },
+        { l: isAr ? "متاحة" : "Available", v: tagsListArr.filter(x => !x.disabled && !busyTags.has(x.code)).length },
+        { l: isAr ? "نشطة" : "Active", v: busyTags.size },
+        { l: isAr ? "معطلة" : "Disabled", v: tagsListArr.filter(x => x.disabled).length }
+      ].map(k => `<div class="kpi-card"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div></div>`).join("");
+
+      document.getElementById("tagsList").innerHTML = tagsListArr.length
+        ? tagsListArr.map(tg => {
+            const badge = tg.disabled
+              ? `<span class="chip chip-red">${isAr ? "معطلة" : "Disabled"}</span>`
+              : busyTags.has(tg.code)
+                ? `<span class="chip">${isAr ? "نشطة" : "Active"}</span>`
+                : `<span class="chip chip-green">${isAr ? "متاحة" : "Available"}</span>`;
+            return `
+              <article class="item-card">
+                <div class="row-between"><strong>${tg.code}</strong>${badge}</div>
+                <div style="font-size:12.5px;color:var(--muted);">${tg.note || "NFC + QR"}</div>
+                <div><button type="button" class="btn-sm btn-outline toggle-tag-btn" data-code="${tg.code}">${isAr ? "تبديل الحالة" : "Toggle"}</button></div>
+              </article>
+            `;
+          }).join("")
+        : `<div class="empty">${isAr ? "لا توجد بطاقات مسجلة بعد." : "No tags yet."}</div>`;
+
+      document.getElementById("financeKpis").innerHTML = [
+        { l: kpiLabels[2], v: `${collected.toLocaleString()} ${state.currency}` },
+        { l: kpiLabels[3], v: `${dueSum.toLocaleString()} ${state.currency}` },
+        { l: isAr ? "الخصومات" : "Discounts", v: `${discSum.toLocaleString()} ${state.currency}` },
+        { l: isAr ? "الطلبات الخالصة" : "Paid Orders", v: state.orders.filter(o => orderDue(o) === 0).length }
+      ].map(k => `<div class="kpi-card"><div class="kpi-label">${k.l}</div><div class="kpi-val">${k.v}</div></div>`).join("");
+
+      document.getElementById("paymentsList").innerHTML = state.orders.map(o => `
+        <article class="item-card">
+          <div class="row-between"><strong>${o.code} · ${o.customer}</strong><span class="chip">${o.payMethod || "cash"}</span></div>
+          <div class="row-between" style="font-size:12.5px;">
+            <span>${kpiLabels[2]}: ${Number(o.paid || 0).toLocaleString()} ${state.currency}</span>
+            <span>${kpiLabels[3]}: ${orderDue(o).toLocaleString()} ${state.currency}</span>
+          </div>
+        </article>
+      `).join("");
+
+      bindEvents();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll("[data-open]").forEach(el => { el.onclick = () => openView(el.dataset.open); });
+      document.querySelectorAll(".stage-sel").forEach(sel => {
+        sel.onchange = e => {
+          const ord = state.orders.find(x => x.id === e.target.dataset.id);
+          if (ord) { ord.stage = e.target.value; save(); render(); }
+        };
+      });
+      document.querySelectorAll(".settle-trigger").forEach(btn => {
+        btn.onclick = () => {
+          const ord = state.orders.find(x => x.id === btn.dataset.id);
+          if (!ord) return;
+          modalOrderId = ord.id;
+          document.getElementById("mOrderCode").textContent = ord.code;
+          document.getElementById("mCustName").textContent = `${ord.customer} (${ord.phone})`;
+          document.getElementById("mDueVal").textContent = `${orderDue(ord).toLocaleString()} ${state.currency}`;
+          document.getElementById("settleModal").classList.add("open");
+        };
+      });
+      document.querySelectorAll(".toggle-tag-btn").forEach(btn => {
+        btn.onclick = () => {
+          const code = btn.dataset.code;
+          let found = state.tags.find(x => x.code === code);
+          if (!found) { found = { code, note: "", disabled: false }; state.tags.push(found); }
+          found.disabled = !found.disabled;
+          save(); render();
+        };
+      });
+    }
+
+    // مسح QR الحقيقي عبر الكاميرا
+    async function stopQrScanner() {
+      if (qrScannerInstance) {
+        try { await qrScannerInstance.stop(); } catch {}
+        try { qrScannerInstance.clear(); } catch {}
+        qrScannerInstance = null;
+      }
+      document.getElementById("qrModal").classList.remove("open");
+    }
+
+    document.getElementById("btnOpenQr").onclick = async () => {
+      document.getElementById("qrModal").classList.add("open");
+      const statusEl = document.getElementById("qrStatusText");
+      if (typeof Html5Qrcode === "undefined") {
+        statusEl.textContent = "تعذر تحميل مكتبة الكاميرا (تحقق من الاتصال بالإنترنت).";
+        return;
+      }
+      try {
+        qrScannerInstance = new Html5Qrcode("qrReader");
+        await qrScannerInstance.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 220, height: 220 } },
+          decodedText => {
+            const clean = decodedText.trim().toLowerCase();
+            stopQrScanner();
+            document.getElementById("searchOrder").value = clean;
+            openView("orders");
+            toast(`تم مسح الرمز: ${decodedText.trim()}`);
+          },
+          () => {}
+        );
+      } catch {
+        statusEl.textContent = "تعذر تشغيل الكاميرا. تأكد من منح إذن الكاميرا وفتح الصفحة عبر HTTPS أو تطبيق أندرويد.";
+      }
+    };
+
+    document.getElementById("btnCloseQr").onclick = stopQrScanner;
+
+    document.getElementById("btnOpenNfc").onclick = () => {
+      toast("قراءة NFC الفيزيائية تتطلب تغليف التطبيق في حزمة أندرويد (Capacitor + NFC plugin) واختبارها على جهاز يدعم NFC.");
+    };
+
+    // تصدير ملف Excel (CSV UTF-8 BOM) وPDF من البيانات الحقيقية
+    document.getElementById("btnDoExcel").onclick = () => {
+      const headers = ["Order", "Customer", "Phone", "Service", "Tags", "Total", "Discount", "Paid", "Due", "Currency", "Stage"];
+      const rows = state.orders.map(o => [
+        o.code,
+        o.customer,
+        o.phone,
+        (SERVICES[o.service] && SERVICES[o.service].en) || o.service,
+        o.tags.join(" | "),
+        o.total,
+        o.discount || 0,
+        o.paid || 0,
+        orderDue(o),
+        state.currency,
+        o.stage
+      ]);
+      const csvLines = [headers, ...rows].map(r => r.map(v => `"${String(v ?? "").replace(/"/g, '""')}"`).join(","));
+      const blob = new Blob(["\uFEFF" + csvLines.join("\n")], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `SLT-Financial-Report-${Date.now()}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast("تم إنشاء وتنزيل ملف التقرير المالي بنجاح.");
+    };
+
+    document.getElementById("btnDoPdf").onclick = () => {
+      toast("سيتم فتح نافذة التقرير لحفظه كـ PDF أو طباعته مباشرة.");
+      setTimeout(() => window.print(), 250);
+    };
+
+    document.getElementById("orderForm").onsubmit = e => {
+      e.preventDefault();
+      const rawTags = document.getElementById("inTags").value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean);
+      const activeTags = new Set();
+      state.orders.filter(o => o.stage !== "delivered").forEach(o => o.tags.forEach(tg => activeTags.add(tg)));
+      if (rawTags.some(tg => activeTags.has(tg))) {
+        toast("تنبيه: إحدى البطاقات مرتبطة حاليًا بطلب نشط ولم تُحرَّر بعد.");
+        return;
+      }
+      const ord = {
+        id: String(Date.now()),
+        code: `SLT-${100 + state.orders.length + 1}`,
+        customer: document.getElementById("inName").value.trim(),
+        phone: document.getElementById("inPhone").value.trim(),
+        service: document.getElementById("inService").value,
+        tags: rawTags,
+        items: Number(document.getElementById("inItems").value || 1),
+        deliveryDate: document.getElementById("inDelivery").value,
+        total: Number(document.getElementById("inTotal").value || 0),
+        discount: Number(document.getElementById("inDiscount").value || 0),
+        paid: Number(document.getElementById("inPaid").value || 0),
+        payMethod: document.getElementById("inPayMethod").value,
+        notes: document.getElementById("inNotes").value.trim(),
+        stage: "received"
+      };
+      state.orders.unshift(ord);
+      save();
+      e.target.reset();
+      document.getElementById("inService").value = "wash_iron";
+      document.getElementById("inItems").value = 1;
+      document.getElementById("inTotal").value = 1000;
+      document.getElementById("inDiscount").value = 0;
+      document.getElementById("inPaid").value = 0;
+      toast("تم حفظ الطلب وربط البطاقات بنجاح.");
+      openView("orders");
+    };
+
+    document.getElementById("tagForm").onsubmit = e => {
+      e.preventDefault();
+      const code = document.getElementById("newTagCode").value.trim().toUpperCase();
+      if (!code) return;
+      if (state.tags.some(x => x.code === code)) { toast("هذه البطاقة مسجلة مسبقًا."); return; }
+      state.tags.unshift({ code, note: document.getElementById("newTagNote").value.trim(), disabled: false });
+      save(); e.target.reset(); toast("تم تسجيل البطاقة الذكية."); render();
+    };
+
+    document.getElementById("btnCancelSettle").onclick = () => {
+      modalOrderId = null;
+      document.getElementById("settleModal").classList.remove("open");
+    };
+
+    document.getElementById("btnConfirmSettle").onclick = () => {
+      if (!modalOrderId) return;
+      const ord = state.orders.find(o => o.id === modalOrderId);
+      if (ord) {
+        ord.paid = orderNet(ord);
+        ord.payMethod = document.getElementById("mPayMethod").value;
+        save();
+        toast("تم استلام المبلغ وإلغاء المتبقي بنجاح (المتبقي الآن 0).");
+      }
+      modalOrderId = null;
+      document.getElementById("settleModal").classList.remove("open");
+      render();
+    };
+
+    document.getElementById("btnLang").onclick = () => { state.lang = state.lang === "ar" ? "en" : "ar"; save(); render(); };
+    document.getElementById("btnTheme").onclick = () => { state.theme = state.theme === "light" ? "dark" : "light"; save(); render(); };
+    document.getElementById("selCurrency").onchange = e => { state.currency = e.target.value; save(); render(); };
+    document.getElementById("selRole").onchange = e => { state.role = e.target.value; save(); render(); };
+    document.getElementById("inLaundryName").onchange = e => { state.laundryName = e.target.value.trim() || "مغسلة SLT الذكية"; save(); };
+    document.getElementById("filterStage").onchange = render;
+    document.getElementById("searchOrder").oninput = render;
+    document.getElementById("searchCustomer").oninput = render;
+
+    render();
+  </script>
+</body>
+</html>
